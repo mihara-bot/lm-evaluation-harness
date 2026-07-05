@@ -13,7 +13,8 @@ multiple-choice accuracy over the three labels.
 - `proofwriter`: group that runs the overall task and depth-specific tasks.
 - `proofwriter_all`: all examples from the dataset split.
 - `proofwriter_depth0` through `proofwriter_depth5`: examples filtered by
-  `maxD`, the maximum proof depth.
+  `QDep`, the per-question proof depth. If `QDep` is unavailable, the task
+  falls back to `maxD` and then the depth encoded in `config`.
 
 ## Citation
 

@@ -14,6 +14,13 @@ def _normalize_answer(answer: str) -> str:
 
 
 def _doc_depth(doc: dict) -> Optional[int]:
+    question_depth = doc.get("QDep")
+    if question_depth is not None:
+        try:
+            return int(question_depth)
+        except (TypeError, ValueError):
+            pass
+
     max_depth = doc.get("maxD")
     if max_depth is not None:
         try:
