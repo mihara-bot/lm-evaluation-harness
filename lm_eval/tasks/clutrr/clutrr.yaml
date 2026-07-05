@@ -1,0 +1,14 @@
+group: clutrr
+task:
+  - clutrr_all
+  - clutrr_task_1_2
+  - clutrr_task_1_3
+  - clutrr_task_1_4
+  - clutrr_task_1_5
+  - clutrr_task_1_6
+  - clutrr_task_1_7
+  - clutrr_task_1_8
+  - clutrr_task_1_9
+  - clutrr_task_1_10
+metadata:
+  version: 1.0
