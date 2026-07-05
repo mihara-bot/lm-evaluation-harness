@@ -1,24 +1,11 @@
-tag:
-  - logical_reasoning
-  - multiple_choice
-task: proofwriter
-dataset_path: tasksource/proofwriter
-dataset_name: null
-output_type: multiple_choice
-training_split: train
-fewshot_split: train
-validation_split: validation
-test_split: test
-process_docs: !function utils.process_docs
-doc_to_text: "Given the following facts and rules, determine whether the statement is True, False, or Unknown.\n\nFacts and rules:\n{{theory.strip()}}\n\nStatement: {{question.strip()}}\nAnswer:"
-doc_to_target: label
-doc_to_choice: choices
-metric_list:
-  - metric: acc
-    aggregation: mean
-    higher_is_better: true
-  - metric: acc_norm
-    aggregation: mean
-    higher_is_better: true
+group: proofwriter
+task:
+  - proofwriter_all
+  - proofwriter_depth0
+  - proofwriter_depth1
+  - proofwriter_depth2
+  - proofwriter_depth3
+  - proofwriter_depth4
+  - proofwriter_depth5
 metadata:
   version: 1.0

@@ -10,7 +10,10 @@ multiple-choice accuracy over the three labels.
 
 ## Tasks
 
-- `proofwriter`: all examples from the dataset split.
+- `proofwriter`: group that runs the overall task and depth-specific tasks.
+- `proofwriter_all`: all examples from the dataset split.
+- `proofwriter_depth0` through `proofwriter_depth5`: examples filtered by
+  `maxD`, the maximum proof depth.
 
 ## Citation
 
