@@ -74,9 +74,6 @@ def _download_split(task: str, split: str, base_url: str) -> list[dict]:
 def load_dataset(
     task: str = DEFAULT_TASK, base_url: str = BASE_URL, version=None, **kwargs
 ):
-    if kwargs:
-        raise ValueError(f"Unexpected CLUTRR dataset kwargs: {sorted(kwargs)}")
-
     return {
         split: datasets.Dataset.from_list(_download_split(task, split, base_url))
         for split in SPLITS
