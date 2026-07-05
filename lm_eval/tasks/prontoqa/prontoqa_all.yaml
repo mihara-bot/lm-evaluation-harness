@@ -1,0 +1,8 @@
+include: _template_yaml
+task: prontoqa_all
+dataset_kwargs:
+  hops:
+    - 1
+    - 2
+    - 3
+    - 4

@@ -1,0 +1,9 @@
+group: prontoqa
+task:
+  - prontoqa_all
+  - prontoqa_hop1
+  - prontoqa_hop2
+  - prontoqa_hop3
+  - prontoqa_hop4
+metadata:
+  version: 1.0
