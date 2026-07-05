@@ -4,9 +4,11 @@ CLUTRR (Compositional Language Understanding and Text-based Relational
 Reasoning) evaluates whether models can infer kinship relations from short
 stories.
 
-This implementation uses the `CLUTRR/v1` Hugging Face dataset with the
-`gen_train234_test2to10` configuration. It evaluates answer selection over the
-18 kinship labels in the dataset.
+This implementation reads the `gen_train234_test2to10` CSV files mirrored by
+the original `CLUTRR/v1` Hugging Face dataset script. It avoids relying on the
+dataset script itself, because recent versions of `datasets` no longer execute
+dataset scripts. The task evaluates answer selection over the 18 kinship labels
+in the dataset.
 
 ## Tasks
 

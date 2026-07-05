@@ -1,10 +1,9 @@
 tag:
   - logical_reasoning
   - multiple_choice
-dataset_path: CLUTRR/v1
-dataset_name: gen_train234_test2to10
+custom_dataset: !function utils.load_dataset
 dataset_kwargs:
-  trust_remote_code: true
+  task: gen_train234_test2to10
 output_type: multiple_choice
 training_split: train
 fewshot_split: train

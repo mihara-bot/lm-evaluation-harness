@@ -1,9 +1,16 @@
 import ast
+import csv
+import io
 import re
 from typing import Tuple
+from urllib.request import urlopen
 
 import datasets
 
+
+DEFAULT_TASK = "gen_train234_test2to10"
+BASE_URL = "https://raw.githubusercontent.com/kliang5/CLUTRR_huggingface_dataset/main"
+SPLITS = ("train", "validation", "test")
 
 CHOICES = [
     "aunt",
@@ -26,6 +33,54 @@ CHOICES = [
     "niece",
 ]
 RELATION_TO_LABEL = {relation: idx for idx, relation in enumerate(CHOICES)}
+
+
+def _maybe_int(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return value
+
+
+def _download_split(task: str, split: str, base_url: str) -> list[dict]:
+    url = f"{base_url.rstrip('/')}/{task}/{split}.csv"
+    with urlopen(url, timeout=60) as response:
+        text = response.read().decode("utf-8")
+
+    rows = []
+    for row in csv.DictReader(io.StringIO(text)):
+        rows.append(
+            {
+                "id": row["id"],
+                "story": row["story"],
+                "query": row["query"],
+                "target": _maybe_int(row["target"]),
+                "target_text": row["target_text"],
+                "clean_story": row["clean_story"],
+                "proof_state": row["proof_state"],
+                "f_comb": row["f_comb"],
+                "task_name": row["task_name"],
+                "story_edges": row["story_edges"],
+                "edge_types": row["edge_types"],
+                "query_edge": row["query_edge"],
+                "genders": row["genders"],
+                "task_split": row["task_split"],
+            }
+        )
+
+    return rows
+
+
+def load_dataset(
+    task: str = DEFAULT_TASK, base_url: str = BASE_URL, version=None, **kwargs
+):
+    if kwargs:
+        raise ValueError(f"Unexpected CLUTRR dataset kwargs: {sorted(kwargs)}")
+
+    return {
+        split: datasets.Dataset.from_list(_download_split(task, split, base_url))
+        for split in SPLITS
+    }
 
 
 def _normalize_relation(relation: str) -> str:
