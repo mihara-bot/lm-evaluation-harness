@@ -1,0 +1,4 @@
+include: _template_yaml
+task: bbeh_mini_causal_understanding
+dataset_kwargs:
+  task_name: bbeh_causal_understanding

@@ -1,0 +1,4 @@
+include: _template_yaml
+task: bbeh_mini_dyck_languages
+dataset_kwargs:
+  task_name: bbeh_dyck_languages

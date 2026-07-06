@@ -1,0 +1,4 @@
+include: _template_yaml
+task: bbeh_mini_boardgame_qa
+dataset_kwargs:
+  task_name: bbeh_boardgame_qa

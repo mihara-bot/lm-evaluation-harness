@@ -1,0 +1,4 @@
+include: _template_yaml
+task: bbeh_mini_web_of_lies
+dataset_kwargs:
+  task_name: bbeh_web_of_lies

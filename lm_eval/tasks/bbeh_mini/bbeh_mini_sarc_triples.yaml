@@ -1,0 +1,4 @@
+include: _template_yaml
+task: bbeh_mini_sarc_triples
+dataset_kwargs:
+  task_name: bbeh_sarc_triples

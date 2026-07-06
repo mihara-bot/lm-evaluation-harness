@@ -1,0 +1,4 @@
+include: _template_yaml
+task: bbeh_mini_spatial_reasoning
+dataset_kwargs:
+  task_name: bbeh_spatial_reasoning

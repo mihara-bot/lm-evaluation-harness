@@ -1,0 +1,4 @@
+include: _template_yaml
+task: bbeh_mini_time_arithmetic
+dataset_kwargs:
+  task_name: bbeh_time_arithmetic

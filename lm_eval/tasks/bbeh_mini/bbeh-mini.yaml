@@ -1,24 +1,28 @@
-tag:
-  - reasoning
-task: bbeh-mini
-custom_dataset: !function utils.load_dataset
-output_type: generate_until
-test_split: test
-doc_to_text: !function utils.doc_to_text
-doc_to_target: !function utils.doc_to_target
-target_delimiter: ""
-process_results: !function utils.process_results
-generation_kwargs:
-  until:
-    - "</s>"
-    - "<|im_end|>"
-    - "<|endoftext|>"
-  max_gen_toks: 512
-  do_sample: false
-  temperature: 0.0
-metric_list:
-  - metric: exact_match
-    aggregation: mean
-    higher_is_better: true
+group: bbeh-mini
+task:
+  - bbeh_mini_all
+  - bbeh_mini_boardgame_qa
+  - bbeh_mini_boolean_expressions
+  - bbeh_mini_buggy_tables
+  - bbeh_mini_causal_understanding
+  - bbeh_mini_disambiguation_qa
+  - bbeh_mini_dyck_languages
+  - bbeh_mini_geometric_shapes
+  - bbeh_mini_hyperbaton
+  - bbeh_mini_linguini
+  - bbeh_mini_movie_recommendation
+  - bbeh_mini_multistep_arithmetic
+  - bbeh_mini_nycc
+  - bbeh_mini_object_counting
+  - bbeh_mini_object_properties
+  - bbeh_mini_sarc_triples
+  - bbeh_mini_shuffled_objects
+  - bbeh_mini_spatial_reasoning
+  - bbeh_mini_sportqa
+  - bbeh_mini_temporal_sequence
+  - bbeh_mini_time_arithmetic
+  - bbeh_mini_web_of_lies
+  - bbeh_mini_word_sorting
+  - bbeh_mini_zebra_puzzles
 metadata:
   version: 1.0

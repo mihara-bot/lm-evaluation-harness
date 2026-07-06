@@ -1,0 +1,4 @@
+include: _template_yaml
+task: bbeh_mini_movie_recommendation
+dataset_kwargs:
+  task_name: bbeh_movie_recommendation

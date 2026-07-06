@@ -11,10 +11,14 @@ the answer extraction and fuzzy exact-match rules from the official
 
 ## Tasks
 
-- `bbeh-mini`: the 460-example BBEH mini set.
+- `bbeh-mini`: group that runs the overall mini task and all subtask splits.
+- `bbeh_mini_all`: the full 460-example BBEH mini set.
+- `bbeh_mini_<subtask>`: one 20-example split for each BBEH subtask.
 
-The mini JSON file contains only `input` and `target` fields, so this
-implementation reports the overall mini score rather than per-subtask scores.
+The official mini JSON file contains only `input` and `target` fields. The
+subtask labels here were recovered by exact-matching the 460 mini examples
+against the official full BBEH task files; every subtask matches exactly 20 mini
+examples, with no missing or duplicated examples.
 
 ## Citation
 

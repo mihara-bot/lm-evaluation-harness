@@ -1,0 +1,4 @@
+include: _template_yaml
+task: bbeh_mini_hyperbaton
+dataset_kwargs:
+  task_name: bbeh_hyperbaton

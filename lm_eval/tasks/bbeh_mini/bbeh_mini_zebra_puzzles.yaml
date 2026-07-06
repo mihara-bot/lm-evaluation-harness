@@ -1,0 +1,4 @@
+include: _template_yaml
+task: bbeh_mini_zebra_puzzles
+dataset_kwargs:
+  task_name: bbeh_zebra_puzzles

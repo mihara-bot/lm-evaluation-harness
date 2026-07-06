@@ -1,0 +1,4 @@
+include: _template_yaml
+task: bbeh_mini_temporal_sequence
+dataset_kwargs:
+  task_name: bbeh_temporal_sequence
