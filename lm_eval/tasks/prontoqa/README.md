@@ -29,7 +29,7 @@ examples to format the prompt.
   chain after whitespace normalization.
 - `acc` / `acc_norm`: for the multiple-choice variants, whether the model
   assigns higher loglikelihood to the gold proof than to a hard negative proof
-  created by negating the final proof statement.
+  with the same final statement and a corrupted intermediate proof step.
 
 ## Citation
 

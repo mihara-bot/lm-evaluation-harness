@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Iterable
+from typing import Iterable, Optional
 from urllib.request import urlopen
 
 import datasets
@@ -28,26 +28,54 @@ def _format_chain(chain: Iterable[str]) -> str:
     return " ".join(str(step).strip() for step in chain if str(step).strip())
 
 
-def _negate_statement(statement: str) -> str:
-    statement = str(statement).strip()
-
-    replacements = (
-        (" is not ", " is "),
-        (" are not ", " are "),
-        (" is ", " is not "),
-        (" are ", " are not "),
-    )
-    for old, new in replacements:
-        if old in statement:
-            return statement.replace(old, new, 1)
-
-    return f"It is not true that {statement}"
+def _split_statements(text: str) -> list[str]:
+    return [f"{statement.strip()}." for statement in str(text).split(".") if statement.strip()]
 
 
-def _build_negative_proof(chain: list[str]) -> tuple[str, str]:
-    negative_final = _negate_statement(chain[-1])
-    negative_chain = [*chain[:-1], negative_final]
-    return _format_chain(negative_chain), negative_final
+def _is_rule_like(statement: str) -> bool:
+    normalized = f" {_normalize_text(statement)} "
+    first_word = normalized.strip().split(" ", 1)[0]
+    return first_word in {"each", "every", "everything", "all"} or " are " in normalized
+
+
+def _select_replacement_statement(
+    question: str, chain: list[str], target_index: int
+) -> Optional[str]:
+    target = chain[target_index]
+    chain_statements = {_normalize_text(step) for step in chain}
+    candidates = [
+        statement
+        for statement in _split_statements(question)
+        if _normalize_text(statement) not in chain_statements
+    ]
+    same_kind_candidates = [
+        statement
+        for statement in candidates
+        if _is_rule_like(statement) == _is_rule_like(target)
+    ]
+    pool = same_kind_candidates or candidates
+
+    if not pool:
+        return None
+
+    return min(pool, key=lambda statement: (abs(len(statement) - len(target)), statement))
+
+
+def _build_negative_proof(question: str, chain: list[str]) -> tuple[str, str, str, str]:
+    target_index = max(0, len(chain) - 2)
+    original_step = chain[target_index]
+    replacement_step = _select_replacement_statement(question, chain, target_index)
+    negative_chain = [*chain]
+
+    if replacement_step is None and len(chain) > 2:
+        replacement_step = chain[0]
+        target_index = 1
+        original_step = chain[target_index]
+
+    if replacement_step is not None:
+        negative_chain[target_index] = replacement_step
+
+    return _format_chain(negative_chain), chain[-1], original_step, replacement_step or ""
 
 
 def _flatten_file(hop: int, filename: str) -> list[dict]:
@@ -62,7 +90,12 @@ def _flatten_file(hop: int, filename: str) -> list[dict]:
             for step in test_example["chain_of_thought"]
             if str(step).strip()
         ]
-        negative_proof, negative_final_statement = _build_negative_proof(gold_chain)
+        (
+            negative_proof,
+            negative_final_statement,
+            negative_original_step,
+            negative_replacement_step,
+        ) = _build_negative_proof(test_example["question"], gold_chain)
         in_context_examples = []
         for key in sorted(example):
             if not key.startswith("in_context_example"):
@@ -92,6 +125,8 @@ def _flatten_file(hop: int, filename: str) -> list[dict]:
                 "gold_final_statement": gold_chain[-1],
                 "negative_proof": negative_proof,
                 "negative_final_statement": negative_final_statement,
+                "negative_original_step": negative_original_step,
+                "negative_replacement_step": negative_replacement_step,
                 "in_context_examples": in_context_examples,
             }
         )
