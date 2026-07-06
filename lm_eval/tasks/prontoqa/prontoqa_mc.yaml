@@ -1,0 +1,5 @@
+group: prontoqa_mc
+task:
+  - prontoqa_all_mc
+metadata:
+  version: 1.0

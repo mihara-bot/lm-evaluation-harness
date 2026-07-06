@@ -28,6 +28,28 @@ def _format_chain(chain: Iterable[str]) -> str:
     return " ".join(str(step).strip() for step in chain if str(step).strip())
 
 
+def _negate_statement(statement: str) -> str:
+    statement = str(statement).strip()
+
+    replacements = (
+        (" is not ", " is "),
+        (" are not ", " are "),
+        (" is ", " is not "),
+        (" are ", " are not "),
+    )
+    for old, new in replacements:
+        if old in statement:
+            return statement.replace(old, new, 1)
+
+    return f"It is not true that {statement}"
+
+
+def _build_negative_proof(chain: list[str]) -> tuple[str, str]:
+    negative_final = _negate_statement(chain[-1])
+    negative_chain = [*chain[:-1], negative_final]
+    return _format_chain(negative_chain), negative_final
+
+
 def _flatten_file(hop: int, filename: str) -> list[dict]:
     url = f"{BASE_URL}/{filename}"
     raw_data = _load_json(url)
@@ -40,6 +62,7 @@ def _flatten_file(hop: int, filename: str) -> list[dict]:
             for step in test_example["chain_of_thought"]
             if str(step).strip()
         ]
+        negative_proof, negative_final_statement = _build_negative_proof(gold_chain)
         in_context_examples = []
         for key in sorted(example):
             if not key.startswith("in_context_example"):
@@ -67,6 +90,8 @@ def _flatten_file(hop: int, filename: str) -> list[dict]:
                 "chain_of_thought": gold_chain,
                 "gold_proof": _format_chain(gold_chain),
                 "gold_final_statement": gold_chain[-1],
+                "negative_proof": negative_proof,
+                "negative_final_statement": negative_final_statement,
                 "in_context_examples": in_context_examples,
             }
         )
@@ -103,6 +128,10 @@ def doc_to_text(doc: dict) -> str:
 
 def doc_to_target(doc: dict) -> str:
     return " " + doc["gold_proof"]
+
+
+def doc_to_choice_proof(doc: dict) -> list[str]:
+    return [" " + doc["gold_proof"], " " + doc["negative_proof"]]
 
 
 def process_results(doc: dict, results: list[str]) -> dict[str, float]:

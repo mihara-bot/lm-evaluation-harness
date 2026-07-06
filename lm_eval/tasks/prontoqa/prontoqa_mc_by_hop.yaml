@@ -1,0 +1,8 @@
+group: prontoqa_mc_by_hop
+task:
+  - prontoqa_hop1_mc
+  - prontoqa_hop2_mc
+  - prontoqa_hop3_mc
+  - prontoqa_hop4_mc
+metadata:
+  version: 1.0

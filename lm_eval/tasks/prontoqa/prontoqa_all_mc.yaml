@@ -1,0 +1,8 @@
+include: _mc_template_yaml
+task: prontoqa_all_mc
+dataset_kwargs:
+  hops:
+    - 1
+    - 2
+    - 3
+    - 4
