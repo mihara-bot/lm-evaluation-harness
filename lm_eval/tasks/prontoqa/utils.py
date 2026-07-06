@@ -32,13 +32,78 @@ def _split_statements(text: str) -> list[str]:
     return [f"{statement.strip()}." for statement in str(text).split(".") if statement.strip()]
 
 
-def _is_rule_like(statement: str) -> bool:
-    normalized = f" {_normalize_text(statement)} "
-    first_word = normalized.strip().split(" ", 1)[0]
-    return first_word in {"each", "every", "everything", "all"} or " are " in normalized
+def _parse_entity_statement(statement: str) -> Optional[tuple[str, str]]:
+    match = re.match(r"^(.+?) is (.+)\.$", str(statement).strip())
+    if not match:
+        return None
+    return match.group(1), match.group(2)
 
 
-def _select_replacement_statement(
+def _predicate_kind(predicate: str) -> str:
+    predicate = str(predicate).strip()
+    if predicate.startswith(("a ", "an ")):
+        return "class"
+    if predicate.startswith("not "):
+        return "neg_property"
+    return "property"
+
+
+def _select_counterfactual_step(
+    question: str, chain: list[str], target_index: int
+) -> Optional[str]:
+    target = chain[target_index]
+    parsed_target = _parse_entity_statement(target)
+    if parsed_target is None:
+        return None
+
+    subject, target_predicate = parsed_target
+    normalized_chain = {_normalize_text(step) for step in chain}
+    target_kind = _predicate_kind(target_predicate)
+
+    same_subject_facts = []
+    predicate_pool = []
+    for statement in _split_statements(question):
+        parsed_statement = _parse_entity_statement(statement)
+        if parsed_statement is None:
+            continue
+        statement_subject, statement_predicate = parsed_statement
+        if _normalize_text(statement) not in normalized_chain:
+            predicate_pool.append(statement_predicate)
+            if statement_subject == subject:
+                same_subject_facts.append(statement)
+
+    def sort_key(statement: str) -> tuple[int, int, str]:
+        parsed_statement = _parse_entity_statement(statement)
+        predicate = parsed_statement[1] if parsed_statement else ""
+        return (
+            int(_predicate_kind(predicate) != target_kind),
+            abs(len(statement) - len(target)),
+            statement,
+        )
+
+    if same_subject_facts:
+        return min(same_subject_facts, key=sort_key)
+
+    for statement in chain:
+        parsed_statement = _parse_entity_statement(statement)
+        if parsed_statement is not None:
+            predicate_pool.append(parsed_statement[1])
+
+    synthetic_steps = []
+    for predicate in predicate_pool:
+        if _normalize_text(predicate) == _normalize_text(target_predicate):
+            continue
+        synthetic_step = f"{subject} is {predicate}."
+        if _normalize_text(synthetic_step) not in normalized_chain:
+            synthetic_steps.append(synthetic_step)
+
+    if synthetic_steps:
+        return min(synthetic_steps, key=sort_key)
+
+    return None
+
+
+def _select_distractor_statement(
     question: str, chain: list[str], target_index: int
 ) -> Optional[str]:
     target = chain[target_index]
@@ -48,34 +113,45 @@ def _select_replacement_statement(
         for statement in _split_statements(question)
         if _normalize_text(statement) not in chain_statements
     ]
-    same_kind_candidates = [
-        statement
-        for statement in candidates
-        if _is_rule_like(statement) == _is_rule_like(target)
-    ]
-    pool = same_kind_candidates or candidates
-
-    if not pool:
+    if not candidates:
         return None
 
-    return min(pool, key=lambda statement: (abs(len(statement) - len(target)), statement))
+    return min(candidates, key=lambda statement: (abs(len(statement) - len(target)), statement))
 
 
-def _build_negative_proof(question: str, chain: list[str]) -> tuple[str, str, str, str]:
-    target_index = max(0, len(chain) - 2)
-    original_step = chain[target_index]
-    replacement_step = _select_replacement_statement(question, chain, target_index)
-    negative_chain = [*chain]
+def _build_negative_proofs(question: str, chain: list[str]) -> list[dict[str, str]]:
+    negatives = []
+    seen_proofs = {_format_chain(chain)}
 
-    if replacement_step is None and len(chain) > 2:
-        replacement_step = chain[0]
-        target_index = 1
+    for target_index in range(0, max(1, len(chain) - 1), 2):
+        if target_index >= len(chain) - 1:
+            continue
+
         original_step = chain[target_index]
+        replacement_step = _select_counterfactual_step(question, chain, target_index)
+        if replacement_step is None:
+            replacement_step = _select_distractor_statement(question, chain, target_index)
+        if replacement_step is None:
+            continue
 
-    if replacement_step is not None:
+        negative_chain = [*chain]
         negative_chain[target_index] = replacement_step
+        negative_proof = _format_chain(negative_chain)
+        normalized_negative_proof = _normalize_text(negative_proof)
+        if normalized_negative_proof in seen_proofs:
+            continue
 
-    return _format_chain(negative_chain), chain[-1], original_step, replacement_step or ""
+        seen_proofs.add(normalized_negative_proof)
+        negatives.append(
+            {
+                "proof": negative_proof,
+                "final_statement": chain[-1],
+                "original_step": original_step,
+                "replacement_step": replacement_step,
+            }
+        )
+
+    return negatives
 
 
 def _flatten_file(hop: int, filename: str) -> list[dict]:
@@ -90,12 +166,9 @@ def _flatten_file(hop: int, filename: str) -> list[dict]:
             for step in test_example["chain_of_thought"]
             if str(step).strip()
         ]
-        (
-            negative_proof,
-            negative_final_statement,
-            negative_original_step,
-            negative_replacement_step,
-        ) = _build_negative_proof(test_example["question"], gold_chain)
+        negative_records = _build_negative_proofs(test_example["question"], gold_chain)
+        if not negative_records:
+            raise ValueError(f"Could not build PrOntoQA hard negative for {example_id}")
         in_context_examples = []
         for key in sorted(example):
             if not key.startswith("in_context_example"):
@@ -123,10 +196,20 @@ def _flatten_file(hop: int, filename: str) -> list[dict]:
                 "chain_of_thought": gold_chain,
                 "gold_proof": _format_chain(gold_chain),
                 "gold_final_statement": gold_chain[-1],
-                "negative_proof": negative_proof,
-                "negative_final_statement": negative_final_statement,
-                "negative_original_step": negative_original_step,
-                "negative_replacement_step": negative_replacement_step,
+                "negative_proof": negative_records[0]["proof"],
+                "negative_final_statement": negative_records[0]["final_statement"],
+                "negative_original_step": negative_records[0]["original_step"],
+                "negative_replacement_step": negative_records[0]["replacement_step"],
+                "negative_proofs": [record["proof"] for record in negative_records],
+                "negative_final_statements": [
+                    record["final_statement"] for record in negative_records
+                ],
+                "negative_original_steps": [
+                    record["original_step"] for record in negative_records
+                ],
+                "negative_replacement_steps": [
+                    record["replacement_step"] for record in negative_records
+                ],
                 "in_context_examples": in_context_examples,
             }
         )
@@ -166,7 +249,8 @@ def doc_to_target(doc: dict) -> str:
 
 
 def doc_to_choice_proof(doc: dict) -> list[str]:
-    return [" " + doc["gold_proof"], " " + doc["negative_proof"]]
+    negative_proofs = doc.get("negative_proofs") or [doc["negative_proof"]]
+    return [" " + doc["gold_proof"]] + [" " + proof for proof in negative_proofs]
 
 
 def process_results(doc: dict, results: list[str]) -> dict[str, float]:

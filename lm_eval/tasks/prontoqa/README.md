@@ -28,8 +28,10 @@ examples to format the prompt.
 - `proof_exact_match`: whether the generated proof exactly matches the gold
   chain after whitespace normalization.
 - `acc` / `acc_norm`: for the multiple-choice variants, whether the model
-  assigns higher loglikelihood to the gold proof than to a hard negative proof
-  with the same final statement and a corrupted intermediate proof step.
+  assigns higher loglikelihood to the gold proof than to all hard negative
+  proofs with the same final statement and one corrupted intermediate proof
+  step. The 1-hop through 4-hop variants use 2, 3, 4, and 5 choices,
+  respectively.
 
 ## Citation
 
