@@ -1,0 +1,30 @@
+tag:
+  - logical_reasoning
+  - multiple_choice
+  - arithmetic
+dataset_path: Mihara-bot/olmo-igsm-arith
+dataset_name: default
+dataset_kwargs:
+  revision: ff400bde5db5637e76fc3ec931b5d9840ed8e6f9
+output_type: multiple_choice
+test_split: test
+num_fewshot: 0
+doc_to_text: "{{preamble}}\n\n{{equations}}\nQuestion: {{query}}?\nAnswer:"
+doc_to_target: answer
+doc_to_choice:
+  - "0"
+  - "1"
+  - "2"
+  - "3"
+  - "4"
+  - "5"
+  - "6"
+target_delimiter: " "
+metric_list:
+  - metric: acc
+    aggregation: mean
+    higher_is_better: true
+metadata:
+  version: 1.0
+  dataset_revision: ff400bde5db5637e76fc3ec931b5d9840ed8e6f9
+  data_sha256: c8d77a9d3cc9cc6c5631b1b973231b674ea3d8845ec08fe5de406873e7efca9b

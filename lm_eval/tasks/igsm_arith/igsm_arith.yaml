@@ -1,0 +1,11 @@
+group: igsm_arith
+task:
+  - igsm_arith_d2
+  - igsm_arith_d3
+  - igsm_arith_d4
+aggregate_metric_list:
+  - metric: acc
+    aggregation: mean
+    weight_by_size: true
+metadata:
+  version: 1.0
