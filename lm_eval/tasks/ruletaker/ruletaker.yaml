@@ -1,0 +1,13 @@
+group: ruletaker
+task:
+  - ruletaker_d0
+  - ruletaker_d1
+  - ruletaker_d2
+  - ruletaker_d3
+  - ruletaker_d5
+aggregate_metric_list:
+  - metric: acc
+    aggregation: mean
+    weight_by_size: true
+metadata:
+  version: 1.0

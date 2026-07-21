@@ -1,0 +1,4 @@
+include: _template_yaml
+task: ruletaker_d2
+dataset_kwargs:
+  depth: 2
