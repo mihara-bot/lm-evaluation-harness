@@ -103,16 +103,49 @@ def _sha256(path: Path) -> str:
 
 
 def _find_data_file(root: Path, depth: int) -> Path:
+    filename = "meta-test.jsonl"
+    depth_dir = f"depth-{depth}"
+
+    if root.is_file():
+        if root.name == filename and root.parent.name == depth_dir:
+            return root
+        raise FileNotFoundError(
+            f"Expected a RuleTaker {filename} file, got {root}"
+        )
+
     candidates = (
-        root / ARCHIVE_PREFIX / f"depth-{depth}" / "meta-test.jsonl",
-        root / "original" / f"depth-{depth}" / "meta-test.jsonl",
-        root / f"depth-{depth}" / "meta-test.jsonl",
+        root / ARCHIVE_PREFIX / depth_dir / filename,
+        root / "original" / depth_dir / filename,
+        root / depth_dir / filename,
     )
     for candidate in candidates:
         if candidate.is_file():
             return candidate
+
+    # Some datasets versions preserve an additional cache/archive directory
+    # around the zip contents. Fall back to a recursive search, but require the
+    # official ``original/depth-N`` suffix so that the archive's problog and
+    # language variants cannot be selected accidentally.
+    recursive_matches = sorted(
+        candidate
+        for candidate in root.rglob(filename)
+        if candidate.parent.name == depth_dir
+        and candidate.parent.parent.name == "original"
+        and "__MACOSX" not in candidate.parts
+    )
+    if len(recursive_matches) == 1:
+        return recursive_matches[0]
+    if len(recursive_matches) > 1:
+        matches = ", ".join(str(path) for path in recursive_matches)
+        raise FileNotFoundError(
+            f"Multiple RuleTaker depth-{depth} {filename} files found below "
+            f"{root}: {matches}"
+        )
+
     raise FileNotFoundError(
-        f"RuleTaker depth-{depth} meta-test.jsonl not found below {root}"
+        f"RuleTaker depth-{depth} {filename} not found below {root}. "
+        "The archive may be only partially extracted; remove this extracted "
+        "cache directory and retry once before launching distributed evaluation."
     )
 
 

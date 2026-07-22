@@ -1,6 +1,10 @@
 import importlib.util
+import sys
+import tempfile
+import types
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 UTILS_PATH = (
@@ -13,10 +17,42 @@ UTILS_PATH = (
 SPEC = importlib.util.spec_from_file_location("ruletaker_utils", UTILS_PATH)
 assert SPEC is not None and SPEC.loader is not None
 ruletaker_utils = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(ruletaker_utils)
+DATASETS_STUB = types.ModuleType("datasets")
+DATASETS_STUB.Dataset = object
+DATASETS_STUB.DownloadManager = object
+with mock.patch.dict(sys.modules, {"datasets": DATASETS_STUB}):
+    SPEC.loader.exec_module(ruletaker_utils)
 
 
 class RuleTakerUtilsTest(unittest.TestCase):
+    def test_find_data_file_supports_extra_archive_directory(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            expected = (
+                root
+                / "extra-cache-level"
+                / "rule-reasoning-dataset-V2020.2.5.0"
+                / "original"
+                / "depth-0"
+                / "meta-test.jsonl"
+            )
+            expected.parent.mkdir(parents=True)
+            expected.touch()
+
+            # A similarly named file from another archive variant must not win.
+            problog = root / "problog" / "depth-0" / "meta-test.jsonl"
+            problog.parent.mkdir(parents=True)
+            problog.touch()
+
+            self.assertEqual(ruletaker_utils._find_data_file(root, 0), expected)
+
+    def test_find_data_file_accepts_direct_file_path(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            expected = Path(temp_dir) / "depth-3" / "meta-test.jsonl"
+            expected.parent.mkdir(parents=True)
+            expected.touch()
+            self.assertEqual(ruletaker_utils._find_data_file(expected, 3), expected)
+
     def test_build_theory_uses_natural_triple_then_rule_order(self):
         record = {
             "triples": {
